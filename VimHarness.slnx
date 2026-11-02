@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VimHarness.Acp/VimHarness.Acp.csproj" />
+    <Project Path="src/VimHarness.App/VimHarness.App.csproj" />
+    <Project Path="src/VimHarness.Tui/VimHarness.Tui.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,29 @@
+## .NET build artifacts
+bin/
+obj/
+artifacts/
+
+## NuGet packages / local packaging output
+*.nupkg
+*.snupkg
+nupkg/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Test results
+TestResults/
+*.trx
+
+## IDE / editor
+.vs/
+.vscode/
+.idea/
+*.swp
+
+## OS files
+.DS_Store
+Thumbs.db
