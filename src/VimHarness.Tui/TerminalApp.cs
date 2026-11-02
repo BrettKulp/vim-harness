@@ -3,6 +3,7 @@ using Terminal.Gui.App;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Terminal.Gui.Editor;
+using VimHarness.Tui.Input;
 
 // notes
 // may want Code for the chat history or just code files
@@ -36,7 +37,8 @@ public class TerminalApp
             X = 0,
             Y = 0,
             Width = Dim.Fill(),
-            Height = Dim.Fill(7)
+            Height = Dim.Fill(7),
+            CanFocus = true 
         };
 
         Editor chatHistory = new()
@@ -44,7 +46,7 @@ public class TerminalApp
             Width = Dim.Fill(),
             Height = Dim.Fill(),
             ReadOnly = true,
-            Text = "Welcom to VimHarness!"
+            Text = "Welcom to VimHarness!\nThis is a termnal Wrapper intended for AI harnesses that adds VIM"
         };
 
         chatFrame.Add(chatHistory);
@@ -55,7 +57,8 @@ public class TerminalApp
             X = 0,
             Y = Pos.Bottom(chatFrame),
             Width = Dim.Fill(),
-            Height = 7
+            Height = 7,
+            CanFocus = true 
         };
 
         Editor prompt = new()
@@ -67,6 +70,11 @@ public class TerminalApp
         promptFrame.Add(prompt);
 
         window.Add(chatFrame, promptFrame);
+
+        using VimKeyHandler vim = new (window, chatHistory, prompt);
+        vim.Attach();
+        prompt.SetFocus();
+
         app.Run(window);
     }
 }
