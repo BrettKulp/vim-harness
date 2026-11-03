@@ -1,5 +1,7 @@
 namespace VimHarness.Tui;
+using System.Drawing;
 using Terminal.Gui.App;
+using Terminal.Gui.Drivers;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Terminal.Gui.Editor;
@@ -53,9 +55,15 @@ public class TerminalApp
         {
             Pane = Pane.Prompt,
             Width = Dim.Fill(),
-            Height = Dim.Fill()
+            Height = Dim.Fill(),
         };
 
+        Point screenPosition = prompt.ViewportToScreen(new Point(0, 0));
+        prompt.Cursor = new Cursor
+        {
+            Position = screenPosition,
+            Style = CursorStyle.BlinkingBar
+        };
         promptFrame.Add(prompt);
 
         window.Add(chatFrame, promptFrame);
