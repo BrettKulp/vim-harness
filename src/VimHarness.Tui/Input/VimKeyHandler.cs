@@ -7,12 +7,15 @@ namespace VimHarness.Tui.Input;
 public sealed class VimKeyHandler : IDisposable
 {
     private readonly View _root;
-    private readonly IReadOnlyList<Editor> _panes;
+    private readonly VimPane [] _panes;
     private bool _ctrlWPending;
     private bool _attached;
     private int _activePaneIndex;
+    private Mode mode = Mode.NORMAL;
 
-    public VimKeyHandler (View root, params Editor [] panes)
+    public Mode Mode => mode;
+
+    public VimKeyHandler (View root, params VimPane [] panes)
     {
         _root = root;
         _panes = panes;
@@ -25,29 +28,43 @@ public sealed class VimKeyHandler : IDisposable
 
         _root.KeyDown += OnKeyDown;
 
-        foreach(Editor pane in _panes)
+        foreach(VimPane pane in _panes)
         {
             pane.KeyDown += OnKeyDown;
             pane.KeyBindings.Add(Key.H, Command.Left);
             pane.KeyBindings.Add(Key.J, Command.Down);
             pane.KeyBindings.Add(Key.K, Command.Up);
             pane.KeyBindings.Add(Key.L, Command.Right);
+            pane.KeyBindings.Remove(Key.C.WithCtrl);
+            //pane.KeyBindings.Add(Key.W, MoveFocus(-1));
+            //pane.KeyBindings.Add(Key.Q, MoveFocus(-1));
         }
         _attached = true;
     }
 
     private void OnKeyDown (object? sender, Key key)
     {
+
+        if (key == Key.Esc)
+        {
+            _ctrlWPending = false;
+            mode = Mode.NORMAL;
+            key.Handled = true;
+            return;
+        }
+
         if(_ctrlWPending)
         {
             _ctrlWPending = false;
-            if (key == Key.K) 
+            Key plain = key.NoCtrl;
+
+            if (plain == Key.K)
             {
-                MoveFocus (-1); 
-                key.Handled = true; 
+                MoveFocus (-1);
+                key.Handled = true;
                 return;
             }
-            if (key == Key.J)
+            if (plain == Key.J)
             {
                 MoveFocus (+1);
                 key.Handled = true;
@@ -64,18 +81,33 @@ public sealed class VimKeyHandler : IDisposable
         }
     }
 
+    public void Focus (Pane pane)
+    {
+        for (var i = 0; i < _panes.Length; i++)
+        {
+            if (_panes [i].Pane == pane)
+            {
+                _activePaneIndex = i;
+                _panes [i].SetFocus ();
+                return;
+            }
+        }
+
+        throw new ArgumentOutOfRangeException (nameof (pane), pane, "Pane is not registered.");
+    }
+
     private void MoveFocus (int delta)
     {
         _activePaneIndex = GetActivePaneIndex ();
 
-        int next = (_activePaneIndex + delta + _panes.Count) % _panes.Count;
+        int next = (_activePaneIndex + delta + _panes.Length) % _panes.Length;
         _activePaneIndex = next;
         _panes [next].SetFocus ();
     }
 
     private int GetActivePaneIndex ()
     {
-        for (var i = 0; i < _panes.Count; i++)
+        for (var i = 0; i < _panes.Length; i++)
         {
             if (_panes [i].HasFocus)
             {
@@ -91,7 +123,7 @@ public sealed class VimKeyHandler : IDisposable
         if (!_attached) return;
         _root.KeyDown -= OnKeyDown;
 
-        foreach (Editor pane in _panes)
+        foreach (VimPane pane in _panes)
         {
             pane.KeyDown -= OnKeyDown;
         }
