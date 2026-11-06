@@ -1,3 +1,4 @@
+using Terminal.Gui.Drivers;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Editor;
@@ -50,6 +51,24 @@ public sealed class VimKeyHandler : IDisposable
             _ctrlWPending = false;
             mode = Mode.NORMAL;
             key.Handled = true;
+            if ( _panes[GetActivePaneIndex()].Pane == Pane.Prompt)
+            {
+                VimPane pane = _panes[_activePaneIndex];
+                pane.Cursor = pane.Cursor with { Style = CursorStyle.SteadyBlock };
+            }
+            return;
+        }
+
+        if (key == Key.I)
+        {
+            _ctrlWPending = false;
+            mode = Mode.INSERT;
+            key.Handled = true;
+            if ( _panes[GetActivePaneIndex()].Pane == Pane.Prompt)
+            {
+                VimPane pane = _panes[_activePaneIndex];
+                pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
+            }
             return;
         }
 

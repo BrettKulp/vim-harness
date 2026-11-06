@@ -68,7 +68,7 @@ public class TerminalApp
 
         window.Add(chatFrame, promptFrame);
 
-        using VimKeyHandler vim = new (window, chatHistory, prompt);
+        using VimKeyHandler vim = new (window, prompt, chatHistory);
         vim.Attach();
         vim.Focus(Pane.Prompt);
 
