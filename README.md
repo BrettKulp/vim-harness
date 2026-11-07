@@ -6,6 +6,7 @@ The idea is to have one terminal application where you can drive multiple AI har
 
 ## Inspiration
 
+- [t3code](https://github.com/pingdotgg/t3code)
 - [opencode-vim](https://github.com/leohenon/opencode-vim)
 - [Vim](https://github.com/vim/vim)
 - [Neovim](https://github.com/neovim/neovim)

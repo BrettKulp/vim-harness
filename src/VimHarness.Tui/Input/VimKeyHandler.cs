@@ -36,7 +36,8 @@ public sealed class VimKeyHandler : IDisposable
 
     private void OnKeyDown (object? sender, Key key)
     {
-        VimPane pane = _panes[GetActivePaneIndex()];
+        if (sender is not VimPane pane) return;
+        //VimPane pane = _panes[GetActivePaneIndex()];
 
         if (key == Key.H)
         {
