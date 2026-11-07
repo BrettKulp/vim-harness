@@ -12,9 +12,6 @@ public sealed class VimKeyHandler : IDisposable
     private bool _ctrlWPending;
     private bool _attached;
     private int _activePaneIndex;
-    private Mode mode = Mode.NORMAL;
-
-    public Mode Mode => mode;
 
     public VimKeyHandler (View root, params VimPane [] panes)
     {
@@ -27,33 +24,80 @@ public sealed class VimKeyHandler : IDisposable
     {
         if (_attached) return;
 
-        _root.KeyDown += OnKeyDown;
 
         foreach(VimPane pane in _panes)
         {
             pane.KeyDown += OnKeyDown;
-            pane.KeyBindings.Add(Key.H, Command.Left);
-            pane.KeyBindings.Add(Key.J, Command.Down);
-            pane.KeyBindings.Add(Key.K, Command.Up);
-            pane.KeyBindings.Add(Key.L, Command.Right);
             pane.KeyBindings.Remove(Key.C.WithCtrl);
-            //pane.KeyBindings.Add(Key.W, MoveFocus(-1));
-            //pane.KeyBindings.Add(Key.Q, MoveFocus(-1));
         }
         _attached = true;
     }
 
+
     private void OnKeyDown (object? sender, Key key)
     {
+        VimPane pane = _panes[GetActivePaneIndex()];
+
+        if (key == Key.H)
+        {
+            if (pane.Mode == Mode.NORMAL)
+            {
+                pane.InvokeCommand(Command.Left);
+                key.Handled = true;
+                return;
+
+            }
+        }
+
+        if (key == Key.J)
+        {
+            if (pane.Mode == Mode.NORMAL)
+            {
+                // if it is normal we move instead of write
+                pane.InvokeCommand(Command.Down);
+                key.Handled = true;
+                return;
+
+            }
+        }
+
+        if (key == Key.K)
+        {
+            if (pane.Mode == Mode.NORMAL)
+            {
+                // if it is normal we move instead of write
+                pane.InvokeCommand(Command.Up);
+                key.Handled = true;
+                return;
+
+            }
+        }
+
+
+
+        if (key == Key.L)
+        {
+            if (pane.Mode == Mode.NORMAL)
+            {
+                // if it is normal we move instead of write
+                pane.InvokeCommand(Command.Right);
+                key.Handled = true;
+                return;
+
+            }
+            if (pane.Mode == Mode.INSERT)
+            {
+                // we do not do the movment
+            }
+        }
 
         if (key == Key.Esc)
         {
             _ctrlWPending = false;
-            mode = Mode.NORMAL;
+            pane.Mode = Mode.NORMAL;
             key.Handled = true;
-            if ( _panes[GetActivePaneIndex()].Pane == Pane.Prompt)
+            if ( pane.Pane == Pane.Prompt)
             {
-                VimPane pane = _panes[_activePaneIndex];
                 pane.Cursor = pane.Cursor with { Style = CursorStyle.SteadyBlock };
             }
             return;
@@ -62,11 +106,10 @@ public sealed class VimKeyHandler : IDisposable
         if (key == Key.I)
         {
             _ctrlWPending = false;
-            mode = Mode.INSERT;
+            pane.Mode = Mode.INSERT;
             key.Handled = true;
-            if ( _panes[GetActivePaneIndex()].Pane == Pane.Prompt)
+            if ( pane.Pane == Pane.Prompt)
             {
-                VimPane pane = _panes[_activePaneIndex];
                 pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
             }
             return;
@@ -140,12 +183,6 @@ public sealed class VimKeyHandler : IDisposable
     public void Dispose()
     {
         if (!_attached) return;
-        _root.KeyDown -= OnKeyDown;
-
-        foreach (VimPane pane in _panes)
-        {
-            pane.KeyDown -= OnKeyDown;
-        }
 
         _attached = false;
     }
