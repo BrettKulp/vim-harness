@@ -59,11 +59,6 @@ public class TerminalApp
         };
 
         Point screenPosition = prompt.ViewportToScreen(new Point(0, 0));
-        prompt.Cursor = new Cursor
-        {
-            Position = screenPosition,
-            Style = CursorStyle.BlinkingBar
-        };
         promptFrame.Add(prompt);
 
         window.Add(chatFrame, promptFrame);

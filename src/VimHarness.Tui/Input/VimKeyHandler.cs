@@ -33,6 +33,11 @@ public sealed class VimKeyHandler : IDisposable
         _attached = true;
     }
 
+    private void InvokeCommand(VimPane pane, Command command)
+    {
+        pane.InvokeCommand(command);
+    }
+
 
     private void OnKeyDown (object? sender, Key key)
     {
@@ -42,8 +47,8 @@ public sealed class VimKeyHandler : IDisposable
         {
             if (pane.Mode == Mode.NORMAL)
             {
-                pane.InvokeCommand(Command.Left);
-                key.Handled = true;
+                InvokeCommand(pane, Command.Left);
+                SetKeyHandled();
                 return;
 
             }
@@ -54,8 +59,8 @@ public sealed class VimKeyHandler : IDisposable
             if (pane.Mode == Mode.NORMAL)
             {
                 // if it is normal we move instead of write
-                pane.InvokeCommand(Command.Down);
-                key.Handled = true;
+                InvokeCommand(pane,Command.Down);
+                SetKeyHandled();
                 return;
 
             }
@@ -66,22 +71,20 @@ public sealed class VimKeyHandler : IDisposable
             if (pane.Mode == Mode.NORMAL)
             {
                 // if it is normal we move instead of write
-                pane.InvokeCommand(Command.Up);
-                key.Handled = true;
+                InvokeCommand(pane,Command.Up);
+                SetKeyHandled();
                 return;
 
             }
         }
-
-
 
         if (key == Key.L)
         {
             if (pane.Mode == Mode.NORMAL)
             {
                 // if it is normal we move instead of write
-                pane.InvokeCommand(Command.Right);
-                key.Handled = true;
+                InvokeCommand(pane,Command.Right);
+                SetKeyHandled();
                 return;
 
             }
@@ -97,8 +100,8 @@ public sealed class VimKeyHandler : IDisposable
             {
                 _ctrlWPending = false;
                 key.Handled = true;
-                pane.InvokeCommand(Command.DeleteCharRight);
-                key.Handled = true;
+                InvokeCommand(pane,Command.DeleteCharRight);
+                SetKeyHandled();
             }
         }
 
@@ -106,7 +109,7 @@ public sealed class VimKeyHandler : IDisposable
         {
             _ctrlWPending = false;
             pane.Mode = Mode.NORMAL;
-            key.Handled = true;
+                SetKeyHandled();
             if ( pane.Pane == Pane.Prompt)
             {
                 pane.Cursor = pane.Cursor with { Style = CursorStyle.SteadyBlock };
@@ -120,7 +123,7 @@ public sealed class VimKeyHandler : IDisposable
             {
                 _ctrlWPending = false;
                 pane.Mode = Mode.INSERT;
-                key.Handled = true;
+                SetKeyHandled();
                 if ( pane.Pane == Pane.Prompt )
                 {
                     pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
@@ -129,7 +132,7 @@ public sealed class VimKeyHandler : IDisposable
             }
         }
 
-        if(_ctrlWPending)
+        if(_ctrlWPending && pane.Mode != Mode.INSERT)
         {
             _ctrlWPending = false;
             Key plain = key.NoCtrl;
@@ -137,13 +140,13 @@ public sealed class VimKeyHandler : IDisposable
             if (plain == Key.K)
             {
                 MoveFocus (-1);
-                key.Handled = true;
+                SetKeyHandled();
                 return;
             }
             if (plain == Key.J)
             {
                 MoveFocus (+1);
-                key.Handled = true;
+                SetKeyHandled();
                 return;
             }
 
@@ -153,6 +156,11 @@ public sealed class VimKeyHandler : IDisposable
         if (key == Key.W.WithCtrl)
         {
             _ctrlWPending = true;
+            SetKeyHandled();
+        }
+
+        void SetKeyHandled()
+        {
             key.Handled = true;
         }
     }
