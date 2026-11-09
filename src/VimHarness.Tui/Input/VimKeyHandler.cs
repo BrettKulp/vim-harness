@@ -37,7 +37,6 @@ public sealed class VimKeyHandler : IDisposable
     private void OnKeyDown (object? sender, Key key)
     {
         if (sender is not VimPane pane) return;
-        //VimPane pane = _panes[GetActivePaneIndex()];
 
         if (key == Key.H)
         {
@@ -92,6 +91,17 @@ public sealed class VimKeyHandler : IDisposable
             }
         }
 
+        if (key == Key.X) 
+        {
+            if (pane.Mode != Mode.INSERT)
+            {
+                _ctrlWPending = false;
+                key.Handled = true;
+                pane.InvokeCommand(Command.DeleteCharRight);
+                key.Handled = true;
+            }
+        }
+
         if (key == Key.Esc)
         {
             _ctrlWPending = false;
@@ -106,14 +116,17 @@ public sealed class VimKeyHandler : IDisposable
 
         if (key == Key.I)
         {
-            _ctrlWPending = false;
-            pane.Mode = Mode.INSERT;
-            key.Handled = true;
-            if ( pane.Pane == Pane.Prompt)
+            if (pane.Mode != Mode.INSERT)
             {
-                pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
+                _ctrlWPending = false;
+                pane.Mode = Mode.INSERT;
+                key.Handled = true;
+                if ( pane.Pane == Pane.Prompt )
+                {
+                    pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
+                }
+                return;
             }
-            return;
         }
 
         if(_ctrlWPending)
