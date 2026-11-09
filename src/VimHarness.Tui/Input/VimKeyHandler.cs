@@ -122,13 +122,13 @@ public sealed class VimKeyHandler : IDisposable
             if (pane.Mode != Mode.INSERT)
             {
                 _ctrlWPending = false;
-                pane.Mode = Mode.INSERT;
-                SetKeyHandled();
                 if ( pane.Pane == Pane.Prompt )
                 {
-                    pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
-                }
+                pane.Mode = Mode.INSERT;
+                SetKeyHandled();
+                pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
                 return;
+                }
             }
         }
 
@@ -157,6 +157,14 @@ public sealed class VimKeyHandler : IDisposable
         {
             _ctrlWPending = true;
             SetKeyHandled();
+        }
+
+        // did not hit any
+        if (pane.Mode != Mode.INSERT && !_ctrlWPending && (key != Key.C.WithCtrl))
+        {
+            _ctrlWPending = false;
+            SetKeyHandled();
+            return;
         }
 
         void SetKeyHandled()
