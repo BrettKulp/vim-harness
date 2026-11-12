@@ -109,6 +109,7 @@ public sealed class VimKeyHandler : IDisposable
         {
             _ctrlWPending = false;
             pane.Mode = Mode.NORMAL;
+            pane.ClearSelection();
                 SetKeyHandled();
             if ( pane.Pane == Pane.Prompt)
             {
@@ -156,6 +157,22 @@ public sealed class VimKeyHandler : IDisposable
         if (key == Key.W.WithCtrl)
         {
             _ctrlWPending = true;
+            SetKeyHandled();
+        }
+
+        if (key == Key.V)
+        {
+            // enter visual mode
+            pane.Mode = Mode.VISUAL;
+            Console.WriteLine(pane.CaretOffset);
+            _ctrlWPending = false;
+            SetKeyHandled();
+        }
+
+        if (key == Key.V.WithShift)
+        {
+            pane.SelectAll();
+            pane.Mode = Mode.VISUAL_LINE;
             SetKeyHandled();
         }
 

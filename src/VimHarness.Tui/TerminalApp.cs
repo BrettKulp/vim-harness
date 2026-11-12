@@ -6,11 +6,15 @@ using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Terminal.Gui.Editor;
 using VimHarness.Tui.Input;
+using System.Text;
 
 public class TerminalApp
 {
     public void Run()
     {
+
+        TextReader? pipedReader = Console.IsInputRedirected ? Console.In : null;
+
         using IApplication app = Application.Create();
         app.Init();
 
@@ -66,6 +70,37 @@ public class TerminalApp
         using VimKeyHandler vim = new (window, prompt, chatHistory);
         vim.Attach();
         vim.Focus(Pane.Prompt);
+
+        if (pipedReader is not null)
+        {
+            window.Initialized += (_, _) => 
+            {
+                _ = Task.Run(async () => 
+                        {
+                            var buffer = new StringBuilder();
+                            string? line;
+
+                            while ((line = await pipedReader.ReadLineAsync()) is not null)
+                            {
+                                buffer.AppendLine(line);
+
+                                // batch updates
+                                if (pipedReader.Peek() == -1 || buffer.Length > 4096)
+                                {
+                                    string chunk = buffer.ToString();
+                                    buffer.Clear();
+
+                                    app.Invoke(() =>
+                                            {
+                                                chatHistory.Text += chunk;
+                                                chatHistory.CaretOffset = chatHistory.Text.Length;
+                                            });
+                                }
+                            }
+                        }
+                        );
+            };
+        }
 
         app.Run(window);
     }
