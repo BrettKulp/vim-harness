@@ -2,8 +2,39 @@ using Terminal.Gui.Drivers;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Editor;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+
 
 namespace VimHarness.Tui.Input;
+
+public class BashRunner {
+    public static async Task<(string Output, string Error, int ExitCode)> RunCommandAsync(string command)
+    {
+
+        var processStartInfo = new ProcessStartInfo
+        {
+            FileName = "/bin/bash",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = processStartInfo};
+        processStartInfo.ArgumentList.Add("-c");
+        processStartInfo.ArgumentList.Add(command);
+        process.Start();
+
+        Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+        Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync();
+
+        return (await outputTask, await errorTask, process.ExitCode);
+    }
+}
 
 public sealed class VimKeyHandler : IDisposable
 {
@@ -39,7 +70,7 @@ public sealed class VimKeyHandler : IDisposable
     }
 
 
-    private void OnKeyDown (object? sender, Key key)
+    private async void OnKeyDown (object? sender, Key key)
     {
         if (sender is not VimPane pane) return;
 
@@ -125,6 +156,7 @@ public sealed class VimKeyHandler : IDisposable
                 _ctrlWPending = false;
                 if ( pane.Pane == Pane.Prompt )
                 {
+                pane.ClearSelection();
                 pane.Mode = Mode.INSERT;
                 SetKeyHandled();
                 pane.Cursor = pane.Cursor with { Style = CursorStyle.BlinkingBar };
@@ -154,19 +186,40 @@ public sealed class VimKeyHandler : IDisposable
             return;
         }
 
+        if (key == Key.Enter && pane.Mode == Mode.NORMAL && pane.Pane == Pane.Prompt)
+        {
+            string text = pane.Document.Text;
+            var (output, error, exitCode) = await BashRunner.RunCommandAsync(text);
+
+            if (exitCode == 0)
+            {
+                Console.WriteLine($"Output:\n{output}");
+            }
+            else
+            {
+            Console.WriteLine($"Error (Code {exitCode}):\n{error}");
+            }
+            
+        }
+
+
         if (key == Key.W.WithCtrl)
         {
             _ctrlWPending = true;
             SetKeyHandled();
         }
 
-        if (key == Key.V)
+
+        if (key == Key.V && pane.Mode != Mode.INSERT)
         {
             // enter visual mode
-            pane.Mode = Mode.VISUAL;
-            Console.WriteLine(pane.CaretOffset);
-            _ctrlWPending = false;
-            SetKeyHandled();
+            if (pane.Mode == Mode.INSERT) 
+            {
+                pane.Mode = Mode.VISUAL;
+                //Console.WriteLine(pane.CaretOffset);
+                _ctrlWPending = false;
+                SetKeyHandled();
+            }
         }
 
         if (key == Key.V.WithShift)
